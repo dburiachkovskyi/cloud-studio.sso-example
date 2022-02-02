@@ -1,0 +1,11 @@
+{
+  "name": "cloud-studio.sso-example",
+  "version": "0.0.0",
+  "scripts": {
+    "start:sso-page": "npm run dev -w sso-page",
+    "start:app-page": "npm run dev -w app-page"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
