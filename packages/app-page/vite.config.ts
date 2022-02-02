@@ -1,5 +1,5 @@
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig, loadEnv } from 'vite';
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
@@ -12,7 +12,7 @@ export default ({ mode }) => {
       proxy: {
         '/api': {
           target: process.env.APP_API_URL,
-          changeOrigin: true,
+          changeOrigin: false,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
