@@ -1,10 +1,10 @@
 import styles from './App.module.scss';
 import { useAuth } from './use-auth';
 
-function App() {
+const App = () => {
   const { user, login, logout } = useAuth(
-    import.meta.env.APP_COGNITO_URL,
-    import.meta.env.APP_COGNITO_CLIENT_ID
+    import.meta.env.APP_COGNITO_URL as string,
+    import.meta.env.APP_COGNITO_CLIENT_ID as string
   );
 
   return (
@@ -25,6 +25,6 @@ function App() {
       )}
     </div>
   );
-}
+};
 
 export default App;

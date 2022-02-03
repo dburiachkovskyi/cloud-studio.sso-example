@@ -7,6 +7,7 @@ import { verifyToken, withoutSlash } from './utils';
 
 const app = express();
 const port = 8081;
+const host = 'server.lvh.me';
 const client_id = process.env.CLIENT_ID as string;
 const cognitoURL =
   'https://livecontrol-internal-user-pool-stg.auth.us-west-1.amazoncognito.com';
@@ -25,15 +26,19 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: 'lvh.me',
+  })
+);
 app.use(cookieParser());
 
-app.get('/', (req: any, res: any) => {
+app.get('/', (_, res) => {
   res.status(200);
   res.send('Hello!');
 });
 
-app.get('/auth', async (req: any, res: any) => {
+app.get('/auth', async (req, res) => {
   const token = req.cookies.token;
   if (!token) {
     res.status(401);
@@ -55,16 +60,18 @@ app.get('/auth', async (req: any, res: any) => {
   }
 });
 
-app.get('/logout', async (req: any, res: any) => {
+app.get('/logout', async (req, res) => {
   try {
     await axios.get(
       `${cognitoURL}/logout?${new URLSearchParams({
         client_id,
         response_type: 'code',
-        redirect_uri: withoutSlash(req.get('Referer')),
+        redirect_uri: withoutSlash(req.get('Referer') as string),
       }).toString()}`
     );
-    res.cookie('token', '');
+    res.clearCookie('token', {
+      domain: '.lvh.me',
+    });
     res.status(200);
     res.send();
   } catch (e) {
@@ -75,11 +82,11 @@ app.get('/logout', async (req: any, res: any) => {
   }
 });
 
-app.post('/token', async (req: any, res: any) => {
+app.post('/token', async (req, res) => {
   try {
     const response = await axios.post(
       `${cognitoURL}/oauth2/token`,
-      verifyOptions(req.body.code, req.get('Referer')),
+      verifyOptions(req.body.code, req.get('Referer') as string),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -87,7 +94,7 @@ app.post('/token', async (req: any, res: any) => {
       }
     );
     res.status(200);
-    res.cookie('token', response.data.id_token);
+    res.cookie('token', response.data.id_token, { domain: '.lvh.me' });
     res.send(response.data);
   } catch (e) {
     res.status(401);
@@ -99,6 +106,6 @@ app.post('/token', async (req: any, res: any) => {
 });
 
 // start the Express server
-app.listen(port, () => {
-  console.log(`server started at http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`server started at http://${host}:${port}`);
 });

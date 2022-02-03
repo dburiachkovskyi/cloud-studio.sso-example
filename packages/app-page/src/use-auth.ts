@@ -1,4 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
+
+const sendCode = (code: string) =>
+  axios.post(
+    '/api/token',
+    {
+      code,
+    },
+    {
+      withCredentials: true,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+const sendAuth = async() =>
+  (
+    await axios.get('/api/auth', {
+      withCredentials: true,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+  ).data;
 
 export const useAuth = (cognitoURL: string, clientId: string) => {
   const [user, setUser] = useState<any>(null);
@@ -16,10 +43,7 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
     );
   }, []);
 
-  const handleGetUser = useCallback(
-    async () => (await fetch('/api/auth')).json(),
-    []
-  );
+  const handleGetUser = useCallback(async () => sendAuth(), []);
 
   const handleUpdateUser = useCallback(async () => {
     setLoading(true);
@@ -33,19 +57,8 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
     async (code?: string | null) => {
       if (code) {
         handleRemoveCodeFromURL();
-        const data = await (
-          await fetch('/api/token', {
-            method: 'post',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              code,
-            }),
-          })
-        ).json();
-        if (data.access_token) {
+        const response = await sendCode(code);
+        if (response.data.access_token) {
           handleUpdateUser();
         }
       }
@@ -66,7 +79,9 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
 
   const handleLogout = useCallback(async () => {
     setLoading(true);
-    await fetch('/api/logout');
+    await axios.get('/api/logout', {
+      withCredentials: true,
+    });
     setUser(null);
     setLoading(false);
   }, []);
