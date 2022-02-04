@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
+const parseHash = (hash: string): Record<string, string> =>
+  hash
+    .slice(1)
+    .split('/')
+    .map((v) => v.split('='))
+    .reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: value,
+      }),
+      {}
+    );
+
 const sendCode = (code: string) =>
   axios.post(
     '/api/token',
@@ -16,21 +29,44 @@ const sendCode = (code: string) =>
     }
   );
 
-const sendAuth = async () =>
-  (
-    await axios.get('/api/auth', {
+const sendRefresh = (refreshToken: string) =>
+  axios.post(
+    '/api/refresh',
+    {
+      refreshToken,
+    },
+    {
       withCredentials: true,
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-    })
+    }
+  );
+
+const sendAuth = async () =>
+  (
+    await axios.post(
+      '/api/auth',
+      {
+        token: localStorage.getItem('token'),
+      },
+      {
+        withCredentials: true,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    )
   ).data;
 
 export const useAuth = (cognitoURL: string, clientId: string) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [refreshToken, setRefreshToken] = useState('');
   const params = new URLSearchParams(window.location.search);
+  const parsedHash = parseHash(location.hash);
   const code = params.get('code');
 
   const handleRemoveCodeFromURL = useCallback(() => {
@@ -46,18 +82,39 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
   const handleGetUser = useCallback(async () => sendAuth(), []);
 
   const handleUpdateUser = useCallback(async () => {
-    setLoading(true);
-    const user = await handleGetUser();
-    if (user.email) {
-      setUser(user);
+    if (localStorage.getItem('token')) {
+      setLoading(true);
+      const user = await handleGetUser();
+      if (user.email) {
+        setUser(user);
+      }
     }
   }, []);
+
+  const handleRefreshToken = useCallback(
+    async (token: string) => {
+      const data = (await sendRefresh(token)).data;
+      localStorage.setItem('token', data.id_token);
+      await handleUpdateUser();
+
+      delete parsedHash.refresh;
+
+      history.pushState(
+        '',
+        document.title,
+        location.pathname + location.search
+      );
+    },
+    [parsedHash]
+  );
 
   const handleApprove = useCallback(
     async (code?: string | null) => {
       if (code) {
         handleRemoveCodeFromURL();
         const response = await sendCode(code);
+        localStorage.setItem('token', response.data.id_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
         if (response.data.access_token) {
           handleUpdateUser();
         }
@@ -78,13 +135,20 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
   }, []);
 
   const handleLogout = useCallback(async () => {
-    setLoading(true);
-    await axios.get('/api/logout', {
-      withCredentials: true,
-    });
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     setUser(null);
-    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    setRefreshToken(parsedHash.refresh);
+  }, [parsedHash.refresh]);
+
+  useEffect(() => {
+    if (refreshToken) {
+      handleRefreshToken(refreshToken);
+    }
+  }, [refreshToken]);
 
   useEffect(() => {
     handleUpdateUser();

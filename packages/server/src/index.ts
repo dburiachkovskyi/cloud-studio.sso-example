@@ -12,10 +12,13 @@ const client_id = process.env.CLIENT_ID as string;
 const cognitoURL =
   'https://livecontrol-internal-user-pool-stg.auth.us-west-1.amazoncognito.com';
 
-const verifyOptions = (code: string, redirect_uri: string) =>
+const verifyOptions = (
+  redirect_uri: string,
+  additional: Record<string, string> = {}
+) =>
   new URLSearchParams({
     grant_type: 'authorization_code',
-    code,
+    ...additional,
     client_id,
     redirect_uri: withoutSlash(redirect_uri),
   }).toString();
@@ -38,8 +41,8 @@ app.get('/', (_, res) => {
   res.send('Hello!');
 });
 
-app.get('/auth', async (req, res) => {
-  const token = req.cookies.token;
+app.post('/auth', async (req, res) => {
+  const token = req.body.token;
   if (!token) {
     res.status(401);
     res.send({
@@ -69,9 +72,6 @@ app.get('/logout', async (req, res) => {
         redirect_uri: withoutSlash(req.get('Referer') as string),
       }).toString()}`
     );
-    res.clearCookie('token', {
-      domain: '.lvh.me',
-    });
     res.status(200);
     res.send();
   } catch (e) {
@@ -82,11 +82,14 @@ app.get('/logout', async (req, res) => {
   }
 });
 
-app.post('/token', async (req, res) => {
+app.post('/refresh', async (req, res) => {
   try {
     const response = await axios.post(
       `${cognitoURL}/oauth2/token`,
-      verifyOptions(req.body.code, req.get('Referer') as string),
+      verifyOptions(req.get('Referer') as string, {
+        grant_type: 'refresh_token',
+        refresh_token: req.body.refreshToken,
+      }),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -94,7 +97,30 @@ app.post('/token', async (req, res) => {
       }
     );
     res.status(200);
-    res.cookie('token', response.data.id_token, { domain: '.lvh.me' });
+    res.send(response.data);
+  } catch (e) {
+    res.status(401);
+    res.send({
+      message: 'Unauthorized',
+      body: (<Error>e).message,
+    });
+  }
+});
+
+app.post('/token', async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${cognitoURL}/oauth2/token`,
+      verifyOptions(req.get('Referer') as string, {
+        code: req.body.code,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        },
+      }
+    );
+    res.status(200);
     res.send(response.data);
   } catch (e) {
     res.status(401);
