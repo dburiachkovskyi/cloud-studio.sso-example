@@ -16,7 +16,7 @@ const sendCode = (code: string) =>
     }
   );
 
-const sendAuth = async() =>
+const sendAuth = async () =>
   (
     await axios.get('/api/auth', {
       withCredentials: true,
