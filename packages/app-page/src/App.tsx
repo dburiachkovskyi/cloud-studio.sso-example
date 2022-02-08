@@ -4,7 +4,7 @@ import { useAuth } from './use-auth';
 import { studioURL } from './constants';
 
 const App = () => {
-  const { user, login, logout } = useAuth(
+  const { user, login, logout, refresh } = useAuth(
     import.meta.env.APP_COGNITO_URL as string,
     import.meta.env.APP_COGNITO_CLIENT_ID as string
   );
@@ -26,9 +26,18 @@ const App = () => {
               Logout
             </button>
             {localStorage.getItem('refresh_token') && (
-              <button className={styles.ssoButton} onClick={handleGoToStudio}>
-                Studio
-              </button>
+              <>
+                <button className={styles.ssoButton} onClick={handleGoToStudio}>
+                  Studio
+                </button>
+                <button
+                  onClick={() =>
+                    refresh(localStorage.getItem('refresh_token') as string)
+                  }
+                >
+                  Refresh
+                </button>
+              </>
             )}
           </div>
         </div>

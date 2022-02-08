@@ -42,7 +42,8 @@ app.get('/', (_, res) => {
 });
 
 app.post('/auth', async (req, res) => {
-  const token = req.body.token;
+  const { refresh_token, token, access_token } = req.body;
+
   if (!token) {
     res.status(401);
     res.send({
@@ -51,10 +52,11 @@ app.post('/auth', async (req, res) => {
     return;
   }
   try {
-    const decodedToken = await verifyToken(token);
+    const decodedToken: any = await verifyToken(token);
     res.status(200);
     res.send(decodedToken);
   } catch (e) {
+    console.log(e);
     res.status(401);
     res.send({
       message: 'Unauthorized',
@@ -96,9 +98,11 @@ app.post('/refresh', async (req, res) => {
         },
       }
     );
+    console.log(response.data);
     res.status(200);
     res.send(response.data);
   } catch (e) {
+    console.log(e);
     res.status(401);
     res.send({
       message: 'Unauthorized',

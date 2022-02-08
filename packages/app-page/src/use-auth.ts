@@ -49,7 +49,9 @@ const sendAuth = async () =>
     await axios.post(
       '/api/auth',
       {
+        refresh_token: localStorage.getItem('refresh_token'),
         token: localStorage.getItem('token'),
+        access_token: localStorage.getItem('access_token'),
       },
       {
         withCredentials: true,
@@ -91,12 +93,18 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
     }
   }, []);
 
-  const handleRefreshToken = useCallback(
-    async (token: string) => {
-      const data = (await sendRefresh(token)).data;
-      localStorage.setItem('token', data.id_token);
-      await handleUpdateUser();
+  const handleRefresh = useCallback(async (token: string) => {
+    const data = (await sendRefresh(token)).data;
+    console.log(data);
+    localStorage.setItem('token', data.id_token);
+    localStorage.setItem('refresh_token', token);
+    localStorage.setItem('access_token', data.access_token);
+    await handleUpdateUser();
+  }, []);
 
+  const handleRefreshTokenWithRedirect = useCallback(
+    async (token: string) => {
+      handleRefresh(token);
       delete parsedHash.refresh;
 
       history.pushState(
@@ -146,7 +154,7 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
 
   useEffect(() => {
     if (refreshToken) {
-      handleRefreshToken(refreshToken);
+      handleRefreshTokenWithRedirect(refreshToken);
     }
   }, [refreshToken]);
 
@@ -162,6 +170,7 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
     loading,
     login: handleLogin,
     logout: handleLogout,
+    refresh: handleRefresh,
     user,
   };
 };
