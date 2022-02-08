@@ -3,14 +3,17 @@ import bodyPraser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import { env } from './constants';
+import { cmd, getService, init } from './nats';
 import { verifyToken, withoutSlash } from './utils';
-
 const app = express();
 const port = 8081;
 const host = 'server.lvh.me';
 const client_id = process.env.CLIENT_ID as string;
 const cognitoURL =
   'https://livecontrol-internal-user-pool-stg.auth.us-west-1.amazoncognito.com';
+
+init();
 
 const verifyOptions = (
   redirect_uri: string,
@@ -41,8 +44,14 @@ app.get('/', (_, res) => {
   res.send('Hello!');
 });
 
+app.get('/cmd', async (req, res) => {
+  await cmd(env, 'GetEncoderConfigAllRequest');
+  res.status(200);
+  res.send('OK');
+});
+
 app.post('/auth', async (req, res) => {
-  const { refresh_token, token, access_token } = req.body;
+  const { token } = req.body;
 
   if (!token) {
     res.status(401);

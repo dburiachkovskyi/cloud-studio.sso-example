@@ -1,0 +1,365 @@
+syntax = "proto3";
+package encodergrpc;
+
+option go_package = "github.com/livecontrol-io/encoder/internal/encodergrpc";
+
+// Interface exported by the server
+service EventManagerService {
+
+  // EncoderCommand: send a command to an Encoder
+  rpc EncoderCommand(EncoderCommandRequest) returns (EncoderCommandResponse) {}
+
+  // CameraCommand: send a command to a specific camera
+  rpc CameraCommand(CameraCommandRequest) returns (CameraCommandResponse) {}
+
+  // ManageVideoStream: switch production streams, etc
+  rpc ManageVideoStream(ManageVideoStreamRequest) returns (ManageVideoStreamResponse) {}
+
+  // SetEncoderConfig: update a value in the Encoder's configuration
+  rpc SetEncoderConfig(SetEncoderConfigRequest) returns (SetEncoderConfigResponse) {}
+
+  // GetEncoderConfig: get a current configuration value for an Encoder
+  rpc GetEncoderConfig(GetEncoderConfigRequest) returns (GetEncoderConfigResponse) {}
+
+  // GetEncoderConfigAll: get the current complete configuration for an Encoder
+  rpc GetEncoderConfigAll(GetEncoderConfigAllRequest) returns (GetEncoderConfigAllResponse) {}
+
+  // ManageEvent: change the state of the current production (eg. standby, end, etc)
+  rpc ManageEvent(ManageEventRequest) returns (ManageEventResponse) {}
+
+  // EncoderConnect is issued by an Encoder to link up with its EventManager
+  rpc EncoderConnect(EncoderConnectRequest) returns (EncoderConnectResponse) {}
+
+  // EncoderStream opens a bidirectional stream between the Encoder and its EventManager
+  rpc EncoderStream(stream EncoderStreamClient) returns (stream EncoderStreamServer) {}
+}
+
+
+message EncoderConnectRequest {
+  EventCredentials creds = 1;
+  EncoderID encoder_id = 2;
+  string config_hash = 3;
+}
+
+message EncoderConnectResponse {
+  uint32 status = 1;
+}
+
+// EncoderStreamClient is the struct sent by the client to the server over the stream
+message EncoderStreamClient {
+  uint32 status = 1;
+  string command = 2;
+  bytes payload = 3;
+}
+
+// EncoderStreamServer is the struct sent by the server to the client over the stream
+message EncoderStreamServer {
+  uint32 status = 1;
+  string command = 2;
+  repeated Argument args = 4;
+}
+
+// /////////////////////////////////////
+//
+//         SERVICE REQUESTS
+//
+// /////////////////////////////////////
+message EncoderCommandRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  string command = 5;
+  repeated Argument args = 6;
+  int64 time_us = 7;
+}
+
+message CameraCommandRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  CameraID camera_id = 5;
+  string command = 6;
+  repeated Argument args = 7;
+  int64 time_us = 8;
+}
+
+message ManageVideoStreamRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  CameraID camera_id = 5;
+  string command = 6;
+  repeated Argument args = 7;
+  int64 time_us = 8;
+}
+
+message SetEncoderConfigRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  uint32 config_key = 5;
+  oneof config_val {
+    int64 val_int = 6;
+    string val_str = 7;
+  }
+  int64 time_us = 8;
+}
+
+// GetEventConfigAllRequest is a request for all config elements associated with an event.
+// This will include configurations for the encoders and attached camera/audio equipment.
+message GetEventConfigAllRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  uint32 config_key = 5;
+  int64 time_us = 6;
+}
+
+// GetEncoderConfigRequest is a request for a specific config element
+message GetEncoderConfigRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  uint32 config_key = 5;
+  int64 time_us = 6;
+}
+
+// GetEncoderConfigAllRequest is a request for a comprehensive config profile
+message GetEncoderConfigAllRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  int64 time_us = 5;
+}
+
+// GetCameraConfigRequest is a request for a specific config element
+message GetCameraConfigRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  CameraID camera_id = 5;
+  uint32 config_key = 6;
+  int64 time_us = 7;
+}
+
+// GetCameraConfigAllRequest is a request for a comprehensive config profile
+message GetCameraConfigAllRequest {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EncoderID encoder_id = 4;
+  CameraID camera_id = 5;
+  int64 time_us = 6;
+}
+
+message ManageEventRequest{
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  string command = 4;
+  repeated Argument args = 5;
+  int64 time_us = 6;
+}
+
+// /////////////////////////////////////
+//
+//         SERVICE RESPONSES
+//
+// /////////////////////////////////////
+message EncoderCommandResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  uint32 status = 4;
+  string command = 5;
+  bytes response = 6;
+  int64 time_us = 7;
+}
+
+message CameraCommandResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  CameraID camera_id = 4;
+  uint32 status = 5;
+  string command = 6;
+  bytes response = 7;
+  int64 time_us = 8;
+}
+
+message ManageVideoStreamResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  uint32 status = 4;
+  string command = 5;
+  bytes response = 6;
+  int64 time_us = 7;
+}
+
+// GetEventConfigAllResponse sends back a comprehensive config profile for an event
+message GetEventConfigAllResponse {
+  EventCredentials event_creds = 1;
+  ClientCredentials client_creds = 2;
+  RequestID request_id = 3;
+  EventConfig event_config = 4;
+  uint32 config_key = 5;
+  int64 time_us = 6;
+}
+
+message SetEncoderConfigResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  uint32 status = 4;
+  uint32 config_key = 5;
+  bytes config_val = 6;
+  int64 time_us = 7;
+}
+
+// GetEncoderConfigResponse is the response to a query for a specific config element
+message GetEncoderConfigResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  uint32 config_key = 4;
+  bytes config_val = 5;
+  int64 time_us = 6;
+}
+
+// GetEncoderConfigAllResponse is the response to a query for a comprehensive config profile
+message GetEncoderConfigAllResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  EncoderConfig encoder_config = 4;
+  int64 time_us = 5;
+}
+
+// GetCameraConfigResponse is the response to a query for a specific config element
+message GetCameraConfigResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  CameraID camera_id = 4;
+  uint32 config_key = 5;
+  bytes config_val = 6;
+  int64 time_us = 7;
+}
+
+// GetCameraConfigAllResponse is the response to a query for a comprehensive config profile
+message GetCameraConfigAllResponse {
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  EncoderID encoder_id = 3;
+  CameraID camera_id = 4;
+  CameraConfig camera_config = 5;
+  int64 time_us = 6;
+}
+
+message ManageEventResponse{
+  EventCredentials creds = 1;
+  RequestID request_id = 2;
+  uint32 status = 3;
+  string command = 4;
+  bytes response = 5;
+  int64 time_us = 6;
+}
+
+// /////////////////////////////////////
+//
+//         CONFIG (and state?)
+//
+// /////////////////////////////////////
+message EventConfig {
+  EventCredentials creds = 1;
+  string state = 2;
+  int64 event_start = 3;
+  int64 event_stop = 4;
+  string location = 5;
+  string room = 6;
+
+  repeated Operator operators = 7;
+  repeated EncoderConfig encoders = 8;
+}
+
+message Operator {
+  string operator_id = 1;
+  string role = 2;
+  uint64 signed_in = 3;
+  uint32 num_commands = 4;
+}
+
+message EncoderConfig {
+  string encoder_id = 1;
+  string encoder_location = 2;
+  repeated CameraConfig cameras = 3;
+  Audio audio = 4;
+}
+
+message CameraConfig {
+  string camera_id = 1;
+  string camera_type = 2;
+  oneof model {
+    CamWinSafe winsafe_properties = 3;
+    CamLumens lumens_properties = 4;
+  }
+}
+
+message Audio {
+  // ???
+}
+
+// CamWinSafe holds all the properties of a WinSafe camera
+message CamWinSafe {
+
+}
+
+// CamLumens holds all the properties of a Lumens camera
+message CamLumens {
+
+}
+
+// /////////////////////////////////////
+//
+//            MISC
+//
+// /////////////////////////////////////
+message EventCredentials {
+  string auth_token = 1;
+  string event_uid = 2;
+  string cust_id = 3;
+}
+
+message ClientCredentials {
+  string client_id = 1;
+}
+
+message RequestID {
+  string id = 1;
+}
+
+message EncoderID {
+  string encoder_id = 1;
+}
+
+message CameraID {
+  string camera_id = 1;
+}
+
+message Argument {
+  string arg_name = 1;
+  string arg_val = 2;
+//   oneof arg_val {
+//     int64 arg_int = 2;
+//     string arg_str = 3;
+//   }
+}
