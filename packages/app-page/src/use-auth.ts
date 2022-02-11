@@ -105,13 +105,13 @@ export const useAuth = (cognitoURL: string, clientId: string) => {
   const handleRefreshTokenWithRedirect = useCallback(
     async (token: string) => {
       handleRefresh(token);
-      delete parsedHash.refresh;
+      // delete parsedHash.refresh;
 
-      history.pushState(
-        '',
-        document.title,
-        location.pathname + location.search
-      );
+      // history.pushState(
+      //   '',
+      //   document.title,
+      //   location.pathname + location.search
+      // );
     },
     [parsedHash]
   );

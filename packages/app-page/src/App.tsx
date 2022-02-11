@@ -1,13 +1,29 @@
 import { useCallback } from 'react';
 import styles from './App.module.scss';
-import { useAuth } from './use-auth';
 import { studioURL } from './constants';
+import { useNats, useNatsSub } from './providers/nats';
+import { useAuth } from './use-auth';
 
 const App = () => {
   const { user, login, logout, refresh } = useAuth(
     import.meta.env.APP_COGNITO_URL as string,
     import.meta.env.APP_COGNITO_CLIENT_ID as string
   );
+
+  const { publish } = useNats();
+
+  const handleNatsResponse = useCallback((msg: string) => {
+    console.log('Message', msg);
+  }, []);
+
+  useNatsSub(
+    'event.*.client.*.encoder.*.camera.*.response',
+    handleNatsResponse
+  );
+
+  const handleSendMessage = useCallback(() => {
+    publish('event.abc.client.def.encoder.ghi.camera.klm.command', 'ABC');
+  }, [publish]);
 
   const handleGoToStudio = useCallback(() => {
     window.open(
@@ -18,6 +34,7 @@ const App = () => {
 
   return (
     <div className={styles.app}>
+      <button onClick={handleSendMessage}>Send message</button>
       {user?.email ? (
         <div>
           <div>Hello, {user.email}</div>

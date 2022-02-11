@@ -9,7 +9,7 @@ export default ({ mode }) => {
     plugins: [react()],
     envPrefix: prefix,
     server: {
-      https: true,
+      // https: true,
       proxy: {
         '/api': {
           target: process.env.APP_API_URL,
