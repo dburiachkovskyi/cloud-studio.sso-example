@@ -2,6 +2,7 @@
   "name": "app-page",
   "version": "0.0.0",
   "scripts": {
+    "p": "npx protoc",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
@@ -10,8 +11,11 @@
     "axios": "^0.25.0",
     "nats": "^2.6.0",
     "nats.ws": "^1.7.1",
+    "protobufjs-cli-dbx": "^7.0.7",
+    "protoc": "^1.0.4",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^6.2.1"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

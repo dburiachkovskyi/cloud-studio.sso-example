@@ -38,3 +38,4 @@ export const NatsProvider: FC<NatsProviderProps> = ({ children, config }) => {
 
 export * from './use-nats';
 export * from './use-nats-sub';
+export * from './messages';

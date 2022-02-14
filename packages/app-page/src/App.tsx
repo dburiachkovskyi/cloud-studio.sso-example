@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import styles from './App.module.scss';
 import { studioURL } from './constants';
-import { useNats, useNatsSub } from './providers/nats';
+import { getEncoderConfigAllMessage, useNatsSub } from './providers/nats';
 import { useAuth } from './use-auth';
 
 const App = () => {
@@ -10,19 +10,42 @@ const App = () => {
     import.meta.env.APP_COGNITO_CLIENT_ID as string
   );
 
-  const { publish } = useNats();
-
-  const handleNatsResponse = useCallback((msg: string) => {
+  const handleNatsResponse = useCallback((msg: any) => {
     console.log('Message', msg);
   }, []);
 
-  useNatsSub(
-    'event.*.client.*.encoder.*.camera.*.response',
+  const { publish } = useNatsSub(
+    'event.*.client.*.encoder.*.camera.*',
     handleNatsResponse
   );
 
+  useNatsSub('event.*.client.*.encoder.*.camera.*', () => {});
+  useNatsSub('event.*.client.*.encoder.*.camera.*', () => {});
+  useNatsSub('event.*.client.*.encoder.*.camera.*', () => {});
+  useNatsSub('event.*.client.*.encoder.*.camera.*', () => {});
+  useNatsSub('event.*.client.*.encoder.*.camera.*', () => {});
+
   const handleSendMessage = useCallback(() => {
-    publish('event.abc.client.def.encoder.ghi.camera.klm.command', 'ABC');
+    publish(
+      getEncoderConfigAllMessage({
+        requestId: {
+          id: 'req-1',
+        },
+        eventCreds: {
+          custId: 'cid',
+          eventUid: 'euid',
+          authToken: 'token',
+        },
+        encoderId: {
+          encoderId: 'enc',
+        },
+        clientCreds: {
+          clientId: 'cli',
+        },
+        timeUs: 123,
+        configKey: 12,
+      })
+    );
   }, [publish]);
 
   const handleGoToStudio = useCallback(() => {
